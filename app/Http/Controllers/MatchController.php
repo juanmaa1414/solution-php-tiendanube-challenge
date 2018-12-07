@@ -2,151 +2,77 @@
 
 namespace App\Http\Controllers;
 
+use App\Match;
 use Illuminate\Support\Facades\Input;
+use App\Services\MatchUpdateService;
+use App\Services\MatchCreationService;
 
 class MatchController extends Controller {
 
-    public function index() {
+	public function index() {
         return view('index');
     }
 
     /**
      * Returns a list of matches
      *
-     * TODO it's mocked, make this work :)
-     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function matches() {
-        return response()->json($this->fakeMatches());
+		return response()->json( Match::all() );
     }
 
     /**
      * Returns the state of a single match
      *
-     * TODO it's mocked, make this work :)
-     *
      * @param $id
      * @return \Illuminate\Http\JsonResponse
      */
     public function match($id) {
-        return response()->json([
-            'id' => $id,
-            'name' => 'Match'.$id,
-            'next' => 2,
-            'winner' => 0,
-            'board' => [
-                1, 0, 2,
-                0, 1, 2,
-                0, 0, 0,
-            ],
-        ]);
+		$match = Match::findOrFail($id);
+		
+        return response()->json($match);
     }
 
     /**
      * Makes a move in a match
      *
-     * TODO it's mocked, make this work :)
-     *
      * @param $id
+	 * @param MatchUpdateService $matchUpdateService
      * @return \Illuminate\Http\JsonResponse
      */
-    public function move($id) {
-        $board = [
-            1, 0, 2,
-            0, 1, 2,
-            0, 0, 0,
-        ];
-
+    public function move($id, MatchUpdateService $matchUpdateService) {
+		// TODO: Validate.
         $position = Input::get('position');
-        $board[$position] = 2;
+		
+        $match = $matchUpdateService->move($id, $position);
 
-        return response()->json([
-            'id' => $id,
-            'name' => 'Match'.$id,
-            'next' => 1,
-            'winner' => 0,
-            'board' => $board,
-        ]);
+        return response()->json($match);
     }
 
     /**
-     * Creates a new match and returns the new list of matches
-     *
-     * TODO it's mocked, make this work :)
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function create() {
-        return response()->json($this->fakeMatches());
+	 * Creates a new match and returns the new list of matches
+	 * 
+	 * @param CreateMatch $request
+	 * @param MatchCreationService $matchCreationService
+	 * @return \Illuminate\Http\JsonResponse
+	 */
+    public function create(MatchCreationService $matchCreationService) {
+		$matchCreationService->make();
+		
+        return response()->json( Match::all() );
     }
 
     /**
      * Deletes the match and returns the new list of matches
      *
-     * TODO it's mocked, make this work :)
-     *
      * @param $id
      * @return \Illuminate\Http\JsonResponse
      */
     public function delete($id) {
-        return response()->json($this->fakeMatches()->filter(function($match) use($id){
-            return $match['id'] != $id;
-        })->values());
-    }
-
-    /**
-     * Creates a fake array of matches
-     *
-     * @return \Illuminate\Support\Collection
-     */
-    private function fakeMatches() {
-        return collect([
-            [
-                'id' => 1,
-                'name' => 'Match1',
-                'next' => 2,
-                'winner' => 1,
-                'board' => [
-                    1, 0, 2,
-                    0, 1, 2,
-                    0, 2, 1,
-                ],
-            ],
-            [
-                'id' => 2,
-                'name' => 'Match2',
-                'next' => 1,
-                'winner' => 0,
-                'board' => [
-                    1, 0, 2,
-                    0, 1, 2,
-                    0, 0, 0,
-                ],
-            ],
-            [
-                'id' => 3,
-                'name' => 'Match3',
-                'next' => 1,
-                'winner' => 0,
-                'board' => [
-                    1, 0, 2,
-                    0, 1, 2,
-                    0, 2, 0,
-                ],
-            ],
-            [
-                'id' => 4,
-                'name' => 'Match4',
-                'next' => 2,
-                'winner' => 0,
-                'board' => [
-                    0, 0, 0,
-                    0, 0, 0,
-                    0, 0, 0,
-                ],
-            ],
-        ]);
+		Match::destroy($id);
+		
+        return response()->json( Match::all() );
     }
 
 }
